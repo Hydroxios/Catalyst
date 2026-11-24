@@ -1,0 +1,67 @@
+# Catalyst en local (WSL2 / Linux) : HTTP seulement, domaines *.localhost, aucun DNS à configurer.
+#   docker compose -f docker-compose.local.yml up -d --build
+#   → interface : http://catalyst.localhost        projets : http://<slug>.localhost
+# Variables optionnelles dans .env.local (voir .env.local.example).
+name: catalyst-local
+
+services:
+  traefik:
+    image: traefik:v3.6
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=catalyst-net
+      - --entrypoints.web.address=:80
+    ports: ["80:80"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [catalyst-net]
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: catalyst
+      POSTGRES_PASSWORD: catalyst
+      POSTGRES_DB: catalyst
+    volumes: [pgdata:/var/lib/postgresql/data]
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catalyst"]
+      interval: 3s
+      retries: 20
+    restart: unless-stopped
+
+  catalyst:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    # Défauts du mode local, puis surcharges facultatives. Le .env de prod n'est jamais lu ici.
+    env_file:
+      - path: local.env
+      - path: .env.local
+        required: false
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - catalyst-data:/var/lib/catalyst
+    networks: [internal, catalyst-net]
+    # Laisse le temps de finir une bascule en cours (sinon le build est remis en file et reprend au redémarrage).
+    stop_grace_period: 60s
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.catalyst.rule=Host(`catalyst.localhost`)
+      - traefik.http.routers.catalyst.entrypoints=web
+      - traefik.http.services.catalyst.loadbalancer.server.port=3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  internal:
+  catalyst-net:
+    name: catalyst-net
+
+volumes:
+  pgdata:
+  catalyst-data:

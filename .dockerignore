@@ -1,0 +1,10 @@
+# Contexte = racine du dépôt
+**/node_modules
+**/dist
+**/.tmp
+apps/backend/.env
+apps/backend/.env.local
+apps/backend/.env.dev
+apps/backend/projects.yml
+apps/backend/test
+apps/backend/.catalyst

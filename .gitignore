@@ -1,0 +1,10 @@
+node_modules
+dist
+.tmp
+
+# Secrets et config locale du backend
+apps/backend/.env
+apps/backend/.env.local
+apps/backend/projects.yml
+apps/backend/.env.dev
+apps/backend/.catalyst

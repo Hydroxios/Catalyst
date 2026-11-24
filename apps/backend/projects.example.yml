@@ -1,0 +1,30 @@
+# Liste fermée des repos suivis (plan §5.2). Copier en projects.yml.
+# Variables d'env runtime : ${SECRETS_DIR}/<slug>.env (jamais dans ce fichier).
+projects:
+  - slug: mon-site                 # [a-z0-9-] : sous-domaine et noms Docker
+    repo: killian/mon-site         # owner/name
+    branch: main
+    dockerfile: Dockerfile         # chemin relatif dans le repo
+    context: .                     # contexte de build
+    port: 3000                     # port écouté DANS le conteneur
+    domains:
+      - mon-site.mondomaine.fr     # par défaut : <slug>.<BASE_DOMAIN>
+    healthcheck:
+      path: /                      # GET doit répondre 2xx/3xx
+      timeout_seconds: 60
+      mode: docker                 # docker (zéro coupure, wget/curl requis dans l'image) | worker
+    resources:
+      memory: 512m
+      cpus: "0.5"
+    build_args:
+      NODE_ENV: production
+    deploy_on_first_seen: true     # déployer le commit courant au premier démarrage
+
+  - slug: api-supervision
+    repo: killian/saas-supervision
+    branch: main
+    dockerfile: apps/api/Dockerfile
+    context: .
+    port: 8080
+    healthcheck:
+      path: /health

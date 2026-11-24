@@ -1,0 +1,27 @@
+{
+  "name": "catalyst-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plateforme de déploiement automatique (webhooks GitHub + polling, Docker, Traefik, blue/green)",
+  "workspaces": [
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently -n db,backend,frontend -c gray,blue,magenta \"npm:dev:db\" \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "dev:db": "node scripts/dev-db.mjs",
+    "dev:backend": "node scripts/wait-db.mjs && npm run dev -w @catalyst/backend",
+    "dev:frontend": "npm run dev -w @catalyst/frontend",
+    "build": "npm run build -w @catalyst/frontend && npm run build -w @catalyst/backend",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm test -w @catalyst/backend",
+    "cli": "npm run cli -w @catalyst/backend --",
+    "migrate": "npm run migrate -w @catalyst/backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "embedded-postgres": "16.14.0-beta.17"
+  }
+}

@@ -1,0 +1,84 @@
+# Plateforme : Traefik + PostgreSQL + catalyst (+ sauvegarde quotidienne). Plan §11.1 et §17.1.
+services:
+  traefik:
+    image: traefik:v3.6
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=catalyst-net
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --certificatesresolvers.le.acme.httpchallenge=true
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.le.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+    ports: ["80:80", "443:443"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/letsencrypt
+    networks: [catalyst-net]
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: catalyst
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: catalyst
+    volumes: [pgdata:/var/lib/postgresql/data]
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catalyst"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  catalyst:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    env_file: .env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/catalyst:/var/lib/catalyst
+      - ./projects.yml:/app/projects.yml:ro
+    networks: [internal, catalyst-net]
+    # Laisse le temps de finir une bascule en cours (sinon le build est remis en file et reprend au redémarrage).
+    stop_grace_period: 60s
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.catalyst.rule=Host(`${CATALYST_HOST}`)
+      - traefik.http.routers.catalyst.entrypoints=websecure
+      - traefik.http.routers.catalyst.tls.certresolver=le
+      - traefik.http.services.catalyst.loadbalancer.server.port=3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # pg_dump quotidien, 7 jours conservés (plan §17.3).
+  backup:
+    image: postgres:16
+    entrypoint: ["/bin/sh", "/backup.sh"]
+    environment:
+      PGHOST: postgres
+      PGUSER: catalyst
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: catalyst
+    volumes:
+      - ./scripts/backup.sh:/backup.sh:ro
+      - /var/lib/catalyst/backups:/backups
+    networks: [internal]
+    depends_on: [postgres]
+    restart: unless-stopped
+
+networks:
+  internal:
+  catalyst-net:
+    name: catalyst-net
+
+volumes:
+  pgdata:
+  letsencrypt:

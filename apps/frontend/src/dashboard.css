@@ -1,0 +1,519 @@
+/* Tableau de bord : chiffres, filtres, cartes projet, historique, activité, détection, suivi des logs. */
+
+.page-wide {
+  max-width: none;
+}
+
+/* --- Chiffres --- */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+.stat {
+  display: grid;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+}
+.stat:last-child {
+  border-right: 0;
+}
+.stat-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.stat-value {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.stat-total {
+  font-size: 15px;
+  color: var(--faint);
+  margin-left: 2px;
+}
+
+/* --- Grille + colonne d'activité --- */
+.dash {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 20px;
+  align-items: start;
+}
+.dash-main {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.dash-side {
+  position: sticky;
+  top: 0;
+}
+
+/* --- Barre d'outils --- */
+.toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.search {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+}
+.search .input {
+  padding-left: 32px;
+}
+.search-icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-52%);
+  color: var(--muted);
+  font-size: 15px;
+  pointer-events: none;
+}
+.segmented {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.segmented button {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 5px 11px;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.segmented button:hover {
+  color: var(--text);
+}
+.segmented button.seg-active {
+  background: var(--hover);
+  color: var(--text);
+}
+.segmented button:focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: 1px;
+}
+
+/* --- Carte projet --- */
+.project-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  padding: 18px;
+  min-width: 0;
+  transition: border-color 0.12s;
+}
+.project-card:hover {
+  border-color: var(--line-strong);
+}
+.project-grid > * {
+  min-width: 0;
+}
+.project-card-link {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+}
+.project-card a:not(.project-card-link),
+.project-card button {
+  position: relative;
+  z-index: 1;
+}
+.pc-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+.monogram {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+}
+.pc-title {
+  min-width: 0;
+  display: grid;
+}
+.pc-title h2 {
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pc-domain {
+  font-size: 12.5px;
+  color: var(--muted);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: fit-content;
+  max-width: 100%;
+}
+.pc-domain:hover {
+  color: var(--text);
+}
+.pc-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 6px;
+  align-items: center;
+}
+/* Le nom du projet garde toujours une largeur lisible ; les badges passent à la ligne. */
+.pc-title {
+  min-width: 96px;
+}
+.pc-commit {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 13px;
+}
+.pc-commit > .muted:only-child {
+  grid-column: 1 / -1;
+}
+.pc-msg {
+  color: var(--text-2);
+}
+.pc-when {
+  font-size: 12px;
+  white-space: nowrap;
+}
+.pc-error {
+  margin: -6px 0 0;
+  font-size: 12.5px;
+  color: var(--red-text);
+}
+.pc-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.pc-repo {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.pc-repo .gh-mark {
+  width: 13px;
+  height: 13px;
+}
+
+/* --- Historique (plein = en ligne, gris = mis en ligne puis remplacé, hachuré = échec) --- */
+.history {
+  display: flex;
+  gap: 3px;
+  height: 18px;
+}
+.pip {
+  flex: 1;
+  min-width: 5px;
+  border-radius: 3px;
+  background: var(--line-strong);
+}
+.pip-empty {
+  background: transparent;
+  border: 1px dashed var(--line);
+}
+.pip-live {
+  background: var(--green);
+}
+.pip-superseded {
+  background: #4a4a4a;
+}
+.pip-rolled_back {
+  background: var(--amber);
+}
+.pip-failed {
+  background: var(--red);
+}
+.pip-cancelled {
+  background: #2c2c2c;
+}
+.pip-queued,
+.pip-fetching,
+.pip-building,
+.pip-starting,
+.pip-healthchecking {
+  background: var(--blue);
+  animation: blink 1.4s ease-in-out infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* --- Activité (colonne du tableau de bord) --- */
+.feed {
+  border-radius: var(--radius);
+  padding: 14px 6px 6px;
+}
+.feed-title {
+  margin: 0 10px 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.feed-empty {
+  margin: 6px 10px 10px;
+}
+.feed-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.feed-item {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+}
+.feed-item:hover {
+  background: var(--surface-2);
+}
+.feed-dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 50%;
+}
+.feed-body {
+  display: grid;
+  min-width: 0;
+  font-size: 13px;
+}
+.feed-msg {
+  color: var(--muted);
+  font-size: 12px;
+}
+.feed-when {
+  font-size: 11.5px;
+  white-space: nowrap;
+  padding-top: 1px;
+}
+
+/* --- État vide --- */
+.hero {
+  border-radius: var(--radius);
+  padding: 44px 28px;
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  text-align: center;
+}
+.hero h2 {
+  font-size: 18px;
+}
+.hero > p {
+  max-width: 500px;
+}
+.hero-mark {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+}
+.hero-logo {
+  width: 30px;
+  height: 30px;
+}
+.hero-steps {
+  display: flex;
+  gap: 18px;
+  padding: 0;
+  margin: 4px 0 8px;
+  list-style: none;
+  counter-reset: hs;
+  flex-wrap: wrap;
+  justify-content: center;
+  color: var(--text-2);
+  font-size: 13px;
+}
+.hero-steps li {
+  counter-increment: hs;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hero-steps li::before {
+  content: counter(hs);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--line-strong);
+}
+.hero-steps li.done::before {
+  content: '✓';
+  background: var(--green);
+  color: var(--black);
+  border-color: var(--green);
+}
+
+/* --- Détection à l'import --- */
+.detect {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--radius);
+}
+.detect-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  font-size: 14px;
+}
+.detect-body {
+  display: grid;
+  gap: 6px;
+}
+.detect-cmds {
+  display: grid;
+  gap: 4px;
+  margin: 4px 0 0;
+}
+.detect-cmds > div {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 10px;
+  font-size: 13px;
+}
+.detect-cmds dt {
+  color: var(--muted);
+}
+.detect-cmds dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* --- Suivi des logs --- */
+.log-wrap {
+  position: relative;
+}
+.follow-state {
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.follow-state::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1px solid var(--muted);
+}
+.follow-on {
+  color: var(--text-2);
+}
+.follow-on::before {
+  background: var(--green);
+  border-color: var(--green);
+}
+.follow-btn {
+  position: absolute;
+  right: 16px;
+  bottom: 14px;
+}
+
+@media (max-width: 1100px) {
+  .dash {
+    grid-template-columns: 1fr;
+  }
+  .dash-side {
+    position: static;
+  }
+}
+@media (max-width: 760px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .stat:nth-child(2) {
+    border-right: 0;
+  }
+  .stat:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--line);
+  }
+  .pc-head {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .pc-badges {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Chiffres : couleur seulement quand il y a quelque chose à signaler. */
+.stat-progress .stat-value {
+  color: var(--blue-text);
+}
+.stat-danger .stat-value {
+  color: var(--red-text);
+}
+.stat-ok .stat-value {
+  color: var(--green-text);
+}
+
+/* Site arrêté volontairement : point gris carré (≠ échec rouge, ≠ jamais déployé). */
+.pip-stopped {
+  background: var(--muted);
+  border-radius: 2px;
+}
